@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/gin-gonic/gin"
+)
 
 type Pizza struct {
 	ID    int
@@ -15,4 +19,11 @@ func main() {
 		{ID: 3, name: "Atum com queijo", price: 69.5},
 	}
 	fmt.Println(pizzas)
+	router := gin.Default()
+	router.GET("/pizzas", func(ctx *gin.Context) {
+		ctx.JSON(200, gin.H{
+			"message": pizzas,
+		})
+	})
+	router.Run()
 }
