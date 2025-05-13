@@ -18,6 +18,8 @@ func main() {
 	router.GET("/pizzas", getPizzas)
 	router.POST("/pizzas", postPizzas)
 	router.GET("/pizzas/:id", getPizzasById)
+	router.DELETE("/pizzas/:id", deletePizzasById)
+	router.PUT("/pizzas/:id", editPizzasById)
 	router.Run()
 }
 
@@ -85,4 +87,46 @@ func savePizza() {
 	if err := encoder.Encode(pizzas); err != nil {
 		fmt.Println("Error encoding JSON: ", err)
 	}
+}
+
+func deletePizzasById(ctx *gin.Context) {
+	idParam := ctx.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		ctx.JSON(400, gin.H{"erro": err.Error()})
+		return
+	}
+	for index, pizza := range pizzas {
+		if pizza.ID == id {
+			pizzas = append(pizzas[:index], pizzas[index+1:]...)
+			savePizza()
+			ctx.JSON(200, gin.H{"message": "pizza deleted"})
+			return
+		}
+	}
+	ctx.JSON(404, gin.H{"message": "pizza not found"})
+}
+
+func editPizzasById(ctx *gin.Context) {
+	idParam := ctx.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		ctx.JSON(400, gin.H{"erro": err.Error()})
+		return
+	}
+	var updatedPizza models.Pizza
+	if err := ctx.ShouldBindBodyWithJSON(&updatedPizza); err != nil {
+		ctx.JSON(404, gin.H{"erro": err.Error()})
+		return
+	}
+	for index, pizza := range pizzas {
+		if pizza.ID == id {
+			pizzas[index] = updatedPizza
+			pizzas[index].ID = id
+			savePizza()
+			ctx.JSON(200, pizzas[index])
+			return
+		}
+	}
+	ctx.JSON(404, gin.H{"message": "pizza not found"})
 }
